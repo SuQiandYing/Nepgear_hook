@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "window_hook.h"
 #include "config.h"
 #include "utils.h"
@@ -14,16 +14,35 @@ static pCreateWindowExA orgCreateWindowExA = CreateWindowExA;
 static pSetWindowTextA orgSetWindowTextA = SetWindowTextA;
 static pSetWindowTextW orgSetWindowTextW = SetWindowTextW;
 
+bool ShouldModifyWindow(HWND hWnd) {
+    if (!hWnd) return false;
+
+    LONG_PTR style = GetWindowLongPtrW(hWnd, GWL_STYLE);
+
+    if (style & WS_CHILD) {
+        return false;
+    }
+
+    if ((style & WS_CAPTION) != WS_CAPTION) {
+        return false;
+    }
+    return true;
+}
+
 void ForceUnicodeTitle(HWND hWnd) {
+    if (!ShouldModifyWindow(hWnd)) return;
+
     if (Config::CustomTitleW[0] != L'\0' && wcsstr(Config::CustomTitleW, L"????") == NULL) {
         DefWindowProcW(hWnd, WM_SETTEXT, 0, (LPARAM)Config::CustomTitleW);
-        SetWindowPos(hWnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+        SetWindowPos(hWnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE);
     }
 }
 
 HWND WINAPI newCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
 {
     HWND hWnd = orgCreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+
     if (hWnd) {
         ForceUnicodeTitle(hWnd);
     }
@@ -32,9 +51,9 @@ HWND WINAPI newCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWin
 
 BOOL WINAPI newSetWindowTextA(HWND hWnd, LPCSTR lpString)
 {
-    if (Config::CustomTitleW[0] != L'\0') {
+    if (Config::CustomTitleW[0] != L'\0' && ShouldModifyWindow(hWnd)) {
         if (Config::EnableDebug) {
-            Utils::Log("[Window] Blocked SetWindowTextA: '%s'", lpString);
+            Utils::Log("[Window] Replacing Title (A): '%s' -> Custom", lpString ? lpString : "NULL");
         }
         ForceUnicodeTitle(hWnd);
         return TRUE;
@@ -44,9 +63,9 @@ BOOL WINAPI newSetWindowTextA(HWND hWnd, LPCSTR lpString)
 
 BOOL WINAPI newSetWindowTextW(HWND hWnd, LPCWSTR lpString)
 {
-    if (Config::CustomTitleW[0] != L'\0') {
+    if (Config::CustomTitleW[0] != L'\0' && ShouldModifyWindow(hWnd)) {
         if (Config::EnableDebug) {
-            Utils::Log("[Window] Blocked SetWindowTextW: '%S'", lpString);
+            Utils::Log("[Window] Replacing Title (W): '%S' -> Custom", lpString ? lpString : L"NULL");
         }
         ForceUnicodeTitle(hWnd);
         return TRUE;
@@ -60,7 +79,7 @@ static volatile bool g_bStopThread = false;
 BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam) {
     DWORD processId;
     GetWindowThreadProcessId(hWnd, &processId);
-    if (processId == GetCurrentProcessId() && IsWindowVisible(hWnd)) {
+    if (processId == GetCurrentProcessId() && IsWindowVisible(hWnd) && ShouldModifyWindow(hWnd)) {
         wchar_t currentTitle[256] = { 0 };
         DefWindowProcW(hWnd, WM_GETTEXT, 255, (LPARAM)currentTitle);
 
@@ -77,7 +96,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam) {
 DWORD WINAPI TitleCorrectionThread(LPVOID lpParam) {
     while (!g_bStopThread) {
         EnumWindows(EnumWindowsProc, NULL);
-        Sleep(500);
+        Sleep(1000); 
     }
     return 0;
 }
