@@ -29,7 +29,7 @@ namespace Config {
 
     namespace AuthorInfo {
         const bool ShowPopup = true;
-        const wchar_t* const AUTHOR_IDS[] = {
+        const wchar_t* const AUTHOR_IDS[] = { 
              L"是幼微鸭mua@ai2.moe (御爱同萌)",
              L"是幼微鸭mua@moyu.moe (鲲补丁站)"
         };
