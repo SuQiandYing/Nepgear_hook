@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "../pch.h"
 #include <windows.h>
 #include <stdio.h>
 #include "font_hook.h"
@@ -98,3 +98,4 @@ namespace Hooks {
         Utils::Log("[Core] Font Hook Installed.");
     }
 }
+
