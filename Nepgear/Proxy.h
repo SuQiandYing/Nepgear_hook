@@ -1,4 +1,4 @@
-﻿#include <windows.h>
+#include <windows.h>
 #include <Shlwapi.h>
 
 #pragma comment( lib, "Shlwapi.lib")
@@ -407,7 +407,7 @@ FARPROC WINAPI GetAddress(PCSTR pszProcName)
 	fpAddress = GetProcAddress(g_OldModule, pszProcName);
 	if (fpAddress == NULL)
 	{
-		MessageBoxW(NULL, L"Address is Null", NULL, NULL);
+		MessageBox(NULL, L"Address is Null", NULL, NULL);
 		ExitProcess(-2);
 	}
 	return fpAddress;
@@ -422,7 +422,7 @@ BOOL WINAPI InitHijack()
 	g_OldModule = LoadLibrary(tzPath);
 	if (g_OldModule == NULL)
 	{
-		MessageBoxW(NULL, L"LoadLibrary Handle Null", NULL, NULL);
+		MessageBox(NULL, L"LoadLibrary Handle Null", NULL, NULL);
 	}
 
 	pfnAheadLib_Unnamed2 = GetAddress(MAKEINTRESOURCEA(2));
