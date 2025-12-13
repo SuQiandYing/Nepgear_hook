@@ -40,7 +40,7 @@
 ### 1. 部署文件
 将以下文件复制到游戏根目录（即游戏主 EXE 所在的目录）：
 
-1.  **Nepgear.dll** -> 重命名为 **`winmm.dll`**。
+1.  **Nepgear.dll** -> 重命名为 **`winmm.dll`**。（或直接在VS里设置目标文件名为winmm）
     *   *原理：游戏启动时会尝试加载系统的 winmm.dll，重命名后游戏会优先加载我们的 DLL，Nepgear 会自动将原有函数调用转发给系统真正的 winmm.dll。*
 2.  **Nepgear.ini** -> 配置文件。
 3.  **galgame_cnjp.ttf** -> 你想要替换的字体文件（文件名需与 ini 中配置一致）。
